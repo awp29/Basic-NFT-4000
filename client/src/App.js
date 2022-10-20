@@ -2,7 +2,7 @@
 
 function App() {
   return (
-    <div css={{ display: "flex", justifyContent: "center" }}>
+    <div css={{ display: 'flex', justifyContent: 'center' }}>
       <h1>BASIC NFT 4000!!!!!!</h1>
     </div>
   );
