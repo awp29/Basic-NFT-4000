@@ -7,11 +7,11 @@ const verify = async (contractAddress, args) => {
       address: contractAddress,
       constructorArguments: args,
     });
-  } catch (error) {
-    if (error.message.toLowerCase().includes('already verified')) {
-      console.log('Already verified');
+  } catch (e) {
+    if (e.message.toLowerCase().includes('already verified')) {
+      console.log('Already verified!');
     } else {
-      console.log(error);
+      console.log(e);
     }
   }
 };
