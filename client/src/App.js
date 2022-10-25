@@ -14,6 +14,17 @@ import {
   Header,
   HeaderContent,
 } from './components/header';
+import { NFTGrid } from './components/NFTGrid';
+import {
+  NFTItem,
+  NFTItemBuyButton,
+  NFTItemDetail,
+  NFTItemDetailContent,
+  NFTItemImage,
+  NFTItemName,
+  NFTItemRow,
+} from './components/NFTItem';
+import { shortenAddress } from './utils/shortenAddress';
 
 const GOERLI_CHAIN_ID = 5;
 
@@ -95,7 +106,35 @@ function App() {
         </HeaderContent>
       </Header>
 
-      <h1 css={{ marginTop: '120px' }}>LISTED NFTS: {listedNFTs.length}</h1>
+      <NFTGrid>
+        {listedNFTs.map((nft) => {
+          return (
+            <NFTItem key={nft.tokenId} hasSold={false}>
+              <div css={{ padding: '16px' }}>
+                <NFTItemImage src={nft.image} />
+                <NFTItemName>CRYPTO PENGUIN #{nft.tokenId}</NFTItemName>
+                <NFTItemRow>
+                  <NFTItemDetail>Price</NFTItemDetail>
+                  <NFTItemDetailContent>0.1 ETH</NFTItemDetailContent>
+                </NFTItemRow>
+                <NFTItemRow>
+                  <NFTItemDetail>Owner</NFTItemDetail>
+                  <NFTItemDetailContent title={nft.owner}>
+                    {shortenAddress(nft.owner)}
+                  </NFTItemDetailContent>
+                </NFTItemRow>
+              </div>
+
+              <NFTItemBuyButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('click');
+                }}
+              />
+            </NFTItem>
+          );
+        })}
+      </NFTGrid>
     </div>
   );
 }
