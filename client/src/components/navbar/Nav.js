@@ -16,6 +16,7 @@ const Nav = (props) => {
         borderBottom: '1px solid rgb(229, 232, 235)',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         padding: '16px',
       }}
     >

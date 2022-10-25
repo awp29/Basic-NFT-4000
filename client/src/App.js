@@ -3,7 +3,6 @@ import { ethers } from 'ethers';
 import networkMapping from './constants/networkMapping.json';
 import abi from './constants/abi.json';
 import { useEffect, useState } from 'react';
-import { provider, signer } from './setup';
 import { Nav, AppTitle } from './components/navbar';
 import BannerImg from './components/BannerImg';
 import {
@@ -25,24 +24,33 @@ import {
   NFTItemRow,
 } from './components/NFTItem';
 import { shortenAddress } from './utils/shortenAddress';
+import { NetworkNotSupportedError } from './components';
+import { useMetaMask } from './hooks/useMetaMask';
 
-const GOERLI_CHAIN_ID = 5;
+const { ethereum } = window;
+
+const SUPPORTED_CHAINS = ['5', '31337'];
+
+const networkUrl = getNetworkUrl();
+console.log('networkUrl', networkUrl);
+const provider = new ethers.providers.JsonRpcProvider(networkUrl);
+const signer = provider.getSigner();
 
 function App() {
+  const { connectToMetaMask, connectedAccount, connectedChain } = useMetaMask();
+
   const [listedNFTs, setListedNFTs] = useState([]);
-  const [chainId, setChainId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  console.log('connectedChain', connectedChain);
+  const isConnectedChainSupported = isNetworkSupported();
 
   useEffect(() => {
     const fetchInitalData = async () => {
       try {
-        const network = await provider.getNetwork();
-        setChainId(network.chainId);
+        if (!isConnectedChainSupported) return;
 
-        if (!isChainSupported(network.chainId)) return;
-
-        console.log('network', network);
-
-        const listedItemFilter = getContract(network.chainId).filters.ListedItem();
+        const listedItemFilter = getContract(connectedChain).filters.ListedItem();
         const listedItemLogs = await provider.getLogs({
           fromBlock: 0,
           toBlock: 'latest',
@@ -76,65 +84,72 @@ function App() {
         await Promise.all(promises);
 
         setListedNFTs(listedNFTs);
+        setLoading(false);
       } catch (error) {
         console.error(error);
+        setLoading(false);
       }
     };
 
     fetchInitalData();
   }, []);
 
-  console.log('chainId', chainId);
-  if (!isChainSupported(chainId)) {
-    return <div>Chain is not supported please switch to Goerli</div>;
-  }
-
   return (
     <div>
+      {connectedChain && !isConnectedChainSupported && <NetworkNotSupportedError />}
+
       <Nav>
         <AppTitle />
+        {!connectedAccount && <button onClick={connectToMetaMask}>connect</button>}
+        {connectedAccount && <p>{shortenAddress(connectedAccount)}</p>}
       </Nav>
 
-      <BannerImg />
+      <div css={{ marginTop: '68px' }}>
+        <BannerImg />
 
-      <Header>
-        <Avatar />
-        <HeaderContent>
-          <CollectionTitle />
-          <Author />
-          <CollectionDetails />
-        </HeaderContent>
-      </Header>
+        <Header>
+          <Avatar />
+          <HeaderContent>
+            <CollectionTitle />
+            <Author />
+            <CollectionDetails />
+          </HeaderContent>
+        </Header>
 
-      <NFTGrid>
-        {listedNFTs.map((nft) => {
-          return (
-            <NFTItem key={nft.tokenId} hasSold={false}>
-              <div css={{ padding: '16px' }}>
-                <NFTItemImage src={nft.image} />
-                <NFTItemName>CRYPTO PENGUIN #{nft.tokenId}</NFTItemName>
-                <NFTItemRow>
-                  <NFTItemDetail>Price</NFTItemDetail>
-                  <NFTItemDetailContent>0.1 ETH</NFTItemDetailContent>
-                </NFTItemRow>
-                <NFTItemRow>
-                  <NFTItemDetail>Owner</NFTItemDetail>
-                  <NFTItemDetailContent title={nft.owner}>
-                    {shortenAddress(nft.owner)}
-                  </NFTItemDetailContent>
-                </NFTItemRow>
-              </div>
+        {loading && <h1>LOADING....</h1>}
 
-              <NFTItemBuyButton
-                onClick={(e) => {
-                  e.preventDefault();
-                  console.log('click');
-                }}
-              />
-            </NFTItem>
-          );
-        })}
-      </NFTGrid>
+        {!loading && (
+          <NFTGrid>
+            {listedNFTs.map((nft) => {
+              return (
+                <NFTItem key={nft.tokenId} hasSold={false}>
+                  <div css={{ padding: '16px' }}>
+                    <NFTItemImage src={nft.image} />
+                    <NFTItemName>CRYPTO PENGUIN #{nft.tokenId}</NFTItemName>
+                    <NFTItemRow>
+                      <NFTItemDetail>Price</NFTItemDetail>
+                      <NFTItemDetailContent>0.1 ETH</NFTItemDetailContent>
+                    </NFTItemRow>
+                    <NFTItemRow>
+                      <NFTItemDetail>Owner</NFTItemDetail>
+                      <NFTItemDetailContent title={nft.owner}>
+                        {shortenAddress(nft.owner)}
+                      </NFTItemDetailContent>
+                    </NFTItemRow>
+                  </div>
+
+                  <NFTItemBuyButton
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('click');
+                    }}
+                  />
+                </NFTItem>
+              );
+            })}
+          </NFTGrid>
+        )}
+      </div>
     </div>
   );
 }
@@ -145,10 +160,39 @@ function getContract(chainId) {
   return new ethers.Contract(networkMapping[chainId], abi, signer);
 }
 
-function isChainSupported(chainId) {
-  return chainId === GOERLI_CHAIN_ID || chainId === 31337;
-}
-
 function stripIPFSPrefix(ipfsUrl) {
   return ipfsUrl.substring(7);
+}
+
+function isNetworkSupported() {
+  if (!ethereum) {
+    // default to goerli
+    return true;
+  }
+
+  const chainId = ethereum.networkVersion;
+  if (!chainId) {
+    // default to goerli
+    return true;
+  }
+
+  return SUPPORTED_CHAINS.includes(chainId);
+}
+
+function getNetworkUrl() {
+  console.log('getNetworkUrl-----');
+  if (!ethereum) {
+    // TODO: MOVE API KEY TO .ENV
+    return 'https://goerli.infura.io/v3/6fa8980e7b7f47d281b7f5688c31663e';
+  }
+
+  const chainId = ethereum.networkVersion;
+  console.log('chainId', chainId);
+  if (chainId === 31337) {
+    console.log('return localhost');
+    // TODO: ONLY RETURN THIS IS DEVELOPING
+    return 'http://localhost:8545';
+  }
+  // TODO: MOVE API KEY TO .ENV
+  return 'https://goerli.infura.io/v3/6fa8980e7b7f47d281b7f5688c31663e';
 }

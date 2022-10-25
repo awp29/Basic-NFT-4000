@@ -1,3 +1,4 @@
 import BannerImg from './BannerImg';
+import NetworkNotSupportedError from './NetworkNotSupportedError';
 
-export { BannerImg };
+export { BannerImg, NetworkNotSupportedError };

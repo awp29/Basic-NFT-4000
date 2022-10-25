@@ -10,7 +10,6 @@ const BannerImg = () => {
         minHeight: '100px',
         maxHeight: '300px',
         objectFit: 'cover',
-        marginTop: '68px',
       }}
       src={bannerImg}
       alt="D-PENGUINS Banner image"
