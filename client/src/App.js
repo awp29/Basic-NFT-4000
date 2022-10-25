@@ -27,14 +27,16 @@ import { shortenAddress } from './utils/shortenAddress';
 import { NetworkNotSupportedError } from './components';
 import { useMetaMask } from './hooks/useMetaMask';
 
-const { ethereum } = window;
+const ACTIVE_CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 
-const SUPPORTED_CHAINS = ['5', '31337'];
-
-const networkUrl = getNetworkUrl();
-console.log('networkUrl', networkUrl);
-const provider = new ethers.providers.JsonRpcProvider(networkUrl);
+const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_RPC_URL);
 const signer = provider.getSigner();
+
+const basicNFTMarketplaceContract = new ethers.Contract(
+  networkMapping[ACTIVE_CHAIN_ID],
+  abi,
+  signer
+);
 
 function App() {
   const { connectToMetaMask, connectedAccount, connectedChain } = useMetaMask();
@@ -43,14 +45,13 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   console.log('connectedChain', connectedChain);
-  const isConnectedChainSupported = isNetworkSupported();
+  console.log('ACTIVE_CHAIN_ID', ACTIVE_CHAIN_ID);
+  const isNetworkSuported = connectedChain === ACTIVE_CHAIN_ID;
 
   useEffect(() => {
     const fetchInitalData = async () => {
       try {
-        if (!isConnectedChainSupported) return;
-
-        const listedItemFilter = getContract(connectedChain).filters.ListedItem();
+        const listedItemFilter = basicNFTMarketplaceContract.filters.ListedItem();
         const listedItemLogs = await provider.getLogs({
           fromBlock: 0,
           toBlock: 'latest',
@@ -96,7 +97,7 @@ function App() {
 
   return (
     <div>
-      {connectedChain && !isConnectedChainSupported && <NetworkNotSupportedError />}
+      {connectedChain && !isNetworkSuported && <NetworkNotSupportedError />}
 
       <Nav>
         <AppTitle />
@@ -156,43 +157,6 @@ function App() {
 
 export default App;
 
-function getContract(chainId) {
-  return new ethers.Contract(networkMapping[chainId], abi, signer);
-}
-
 function stripIPFSPrefix(ipfsUrl) {
   return ipfsUrl.substring(7);
-}
-
-function isNetworkSupported() {
-  if (!ethereum) {
-    // default to goerli
-    return true;
-  }
-
-  const chainId = ethereum.networkVersion;
-  if (!chainId) {
-    // default to goerli
-    return true;
-  }
-
-  return SUPPORTED_CHAINS.includes(chainId);
-}
-
-function getNetworkUrl() {
-  console.log('getNetworkUrl-----');
-  if (!ethereum) {
-    // TODO: MOVE API KEY TO .ENV
-    return 'https://goerli.infura.io/v3/6fa8980e7b7f47d281b7f5688c31663e';
-  }
-
-  const chainId = ethereum.networkVersion;
-  console.log('chainId', chainId);
-  if (chainId === 31337) {
-    console.log('return localhost');
-    // TODO: ONLY RETURN THIS IS DEVELOPING
-    return 'http://localhost:8545';
-  }
-  // TODO: MOVE API KEY TO .ENV
-  return 'https://goerli.infura.io/v3/6fa8980e7b7f47d281b7f5688c31663e';
 }

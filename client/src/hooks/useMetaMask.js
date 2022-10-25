@@ -23,6 +23,6 @@ export const useMetaMask = () => {
   return {
     connectToMetaMask: handleConnectToMetaMask,
     connectedAccount,
-    connectedChain: ethereum.networkVersion ? ethereum.networkVersion : 5,
+    connectedChain: ethereum.networkVersion,
   };
 };
