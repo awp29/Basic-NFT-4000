@@ -4,6 +4,16 @@ import networkMapping from './constants/networkMapping.json';
 import abi from './constants/abi.json';
 import { useEffect, useState } from 'react';
 import { provider, signer } from './setup';
+import { Nav, AppTitle } from './components/navbar';
+import BannerImg from './components/BannerImg';
+import {
+  Author,
+  Avatar,
+  CollectionDetails,
+  CollectionTitle,
+  Header,
+  HeaderContent,
+} from './components/header';
 
 const GOERLI_CHAIN_ID = 5;
 
@@ -69,22 +79,23 @@ function App() {
   }
 
   return (
-    <div css={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <h1>BASIC NFT 4000!!!!!!</h1>
-      <p css={{ fontSize: '32px' }}>ChainId {chainId}</p>
-      <p css={{ fontSize: '32px' }}>{listedNFTs.length} NFTs Listed</p>
+    <div>
+      <Nav>
+        <AppTitle />
+      </Nav>
 
-      <ul>
-        {listedNFTs.map((nft) => {
-          return (
-            <li key={nft.tokenId}>
-              <p>{nft.tokenId}</p>
-              <p>{nft.tokenUri}</p>
-              <img src={nft.image} />
-            </li>
-          );
-        })}
-      </ul>
+      <BannerImg />
+
+      <Header>
+        <Avatar />
+        <HeaderContent>
+          <CollectionTitle />
+          <Author />
+          <CollectionDetails />
+        </HeaderContent>
+      </Header>
+
+      <h1 css={{ marginTop: '120px' }}>LISTED NFTS: {listedNFTs.length}</h1>
     </div>
   );
 }
