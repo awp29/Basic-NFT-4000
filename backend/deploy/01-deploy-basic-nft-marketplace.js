@@ -13,7 +13,7 @@ module.exports = async (hre) => {
   log('Deploying BasicNFT ------------------------');
 
   const args = [];
-  const basicNFT = await deploy('BasicNFT', {
+  const basicNFTMarketplace = await deploy('BasicNFTMarketplace', {
     from: deployer,
     args: args,
     log: true,
@@ -22,7 +22,7 @@ module.exports = async (hre) => {
 
   if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
     log('Verifying...');
-    await verify(basicNFT.address, args);
+    await verify(basicNFTMarketplace.address, args);
   }
 
   log('Deployed BasicNFT -------------------------');

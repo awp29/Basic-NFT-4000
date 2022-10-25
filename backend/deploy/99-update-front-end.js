@@ -12,16 +12,19 @@ module.exports = async () => {
 };
 
 async function updateAbi() {
-  const basicNFT = await ethers.getContract('BasicNFT');
-  fs.writeFileSync(FRONT_END_ABI_FILE, basicNFT.interface.format(ethers.utils.FormatTypes.json));
+  const basicNFTMarketplace = await ethers.getContract('BasicNFTMarketplace');
+  fs.writeFileSync(
+    FRONT_END_ABI_FILE,
+    basicNFTMarketplace.interface.format(ethers.utils.FormatTypes.json)
+  );
 }
 
 async function updateContractAddresses() {
   const chainId = network.config.chainId.toString();
-  const basicNFT = await ethers.getContract('BasicNFT');
+  const basicNFTMarketplace = await ethers.getContract('BasicNFTMarketplace');
   const contractAddresses = JSON.parse(fs.readFileSync(NETWORK_MAPPING_FILE, 'utf-8'));
 
-  contractAddresses[chainId] = basicNFT.address;
+  contractAddresses[chainId] = basicNFTMarketplace.address;
 
   fs.writeFileSync(NETWORK_MAPPING_FILE, JSON.stringify(contractAddresses));
 }
