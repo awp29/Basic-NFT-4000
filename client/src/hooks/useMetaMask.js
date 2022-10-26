@@ -2,25 +2,31 @@ import { useEffect, useState } from 'react';
 import { isEmpty } from 'lodash';
 
 const MM_CONNECTED_ACCOUNT_KEY = 'mm_connectedAccount';
+const MM_CONNECTED_CHAIN_KEY = 'mm_connectedChain';
 
 const { ethereum } = window;
 
-ethereum.on('chainChanged', () => {
-  window.location.reload();
-});
-
 export const useMetaMask = () => {
   const [connectedAccount, setConnectedAccount] = useState(null);
+  const [connectedChain, setConnectedChain] = useState(null);
 
   const handleConnectToMetaMask = async () => {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    setConnectedAccount(accounts[0]);
+    const chain = await ethereum.request({ method: 'eth_chainId' });
+
+    handleAccountChanged(accounts);
+    handleChainChanged(chain);
   };
 
   useEffect(() => {
     const connectedAccount = window.localStorage.getItem(MM_CONNECTED_ACCOUNT_KEY);
     if (connectedAccount) {
       setConnectedAccount(connectedAccount);
+    }
+
+    const connectedChain = window.localStorage.getItem(MM_CONNECTED_CHAIN_KEY);
+    if (connectedChain) {
+      setConnectedChain(parseInt(connectedChain).toString());
     }
   }, []);
 
@@ -44,10 +50,24 @@ export const useMetaMask = () => {
     };
   }, []);
 
+  const handleChainChanged = (chainId) => {
+    storeChain(parseChain(chainId));
+    window.location.reload();
+  };
+
+  useEffect(() => {
+    ethereum.on('chainChanged', handleChainChanged);
+
+    return () => {
+      ethereum.removeListener('chainChanged', handleChainChanged);
+    };
+  }, []);
+
   return {
+    connectedToMetaMask: !!connectedAccount,
     connectToMetaMask: handleConnectToMetaMask,
     connectedAccount,
-    connectedChain: ethereum.networkVersion,
+    connectedChain,
   };
 };
 
@@ -57,4 +77,12 @@ function storeConnectedAccountInLocalStorage(connectedAddress) {
 
 function removeConnectedAccountFromLocalStorage() {
   window.localStorage.removeItem(MM_CONNECTED_ACCOUNT_KEY);
+}
+
+function storeChain(chainId) {
+  window.localStorage.setItem(MM_CONNECTED_CHAIN_KEY, chainId);
+}
+
+function parseChain(chainId) {
+  return parseInt(chainId).toString();
 }

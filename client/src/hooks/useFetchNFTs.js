@@ -1,21 +1,27 @@
 import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import abi from '../constants/abi.json';
+import networkMapping from '../constants/networkMapping.json';
 
-export const useFetchNFTs = (basicNFTMarketplaceContract, provider) => {
+export const useFetchNFTs = (chainId) => {
   const [fetchingNFTs, setFetchingNFTs] = useState(true);
-  const [nfts, setNFTs] = useState([]);
+  const [nftMap, setNFTMap] = useState([]);
 
   useEffect(() => {
     const fetchNFTs = async () => {
       try {
-        const listedItemFilter = basicNFTMarketplaceContract.filters.ListedItem();
-        const boughtItemFilter = basicNFTMarketplaceContract.filters.ItemBought();
+        // const providerUrl = getProviderURL(chainId);
+        // const supportedChainId = getSupportedChainId(chainId);
+        const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+        const marketplaceContract = new ethers.Contract(networkMapping[31337], abi);
+
+        const listedItemFilter = marketplaceContract.filters.ListedItem();
+        const boughtItemFilter = marketplaceContract.filters.ItemBought();
 
         const marketplaceLogs = await provider.getLogs({
           fromBlock: 0,
           toBlock: 'latest',
-          address: basicNFTMarketplaceContract.address,
+          address: marketplaceContract.address,
           topics: [[...listedItemFilter.topics, ...boughtItemFilter.topics]],
         });
 
@@ -26,10 +32,9 @@ export const useFetchNFTs = (basicNFTMarketplaceContract, provider) => {
         const nftMapWithBoughtFlag = markNFTsAsBought(nftMap, boughtItemLogs);
 
         const nftMapWithImages = await fetchNFTImages(nftMapWithBoughtFlag);
-        const nftArray = Object.values(nftMapWithImages);
 
         setFetchingNFTs(false);
-        setNFTs(nftArray);
+        setNFTMap(nftMapWithImages);
       } catch (error) {
         console.log(error);
         setFetchingNFTs(false);
@@ -37,11 +42,17 @@ export const useFetchNFTs = (basicNFTMarketplaceContract, provider) => {
     };
 
     fetchNFTs();
-  }, []);
+  }, [chainId]);
+
+  const updateNFT = (nft) => {
+    nftMap[nft.tokenId] = nft;
+    setNFTMap({ ...nftMap });
+  };
 
   return {
     fetchingNFTs,
-    nfts,
+    nftMap,
+    updateNFT,
   };
 };
 
@@ -90,6 +101,7 @@ function markNFTsAsBought(nfts, itemBoughtLogs) {
 
     nftMap[tokenId] = {
       ...nftMap[tokenId],
+      owner: parsedLog.args.buyer,
       bought: true,
     };
   }
@@ -118,3 +130,20 @@ async function fetchNFTImages(nfts) {
 function stripIPFSPrefix(ipfsUrl) {
   return ipfsUrl.substring(7);
 }
+
+// function getProviderURL(chainId) {
+//   if (chainId === '31337') {
+//     return 'http://localhost:8545';
+//   }
+//   return 'https://goerli.infura.io/v3/6fa8980e7b7f47d281b7f5688c31663e';
+// }
+
+// function getSupportedChainId(chainId) {
+//   console.log('getSupportedChainId', chainId);
+//   if (chainId == 5 || chainId == 31337) {
+//     console.log('return', chainId);
+//     return chainId;
+//   }
+//   // DEFAULT TO GOERLI
+//   return 5;
+// }

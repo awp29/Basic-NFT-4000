@@ -2,7 +2,7 @@
 import { ethers } from 'ethers';
 import networkMapping from './constants/networkMapping.json';
 import abi from './constants/abi.json';
-import { Nav, AppTitle } from './components/navbar';
+import { Nav, AppTitle, NavContent } from './components/navbar';
 import BannerImg from './components/BannerImg';
 import {
   Author,
@@ -24,45 +24,81 @@ import {
   NFTItemSoldBanner,
 } from './components/NFTItem';
 import { shortenAddress } from './utils/shortenAddress';
-import { NetworkNotSupportedError } from './components';
+import {
+  NetworkNotSupportedError,
+  ConnectWalletButton,
+  WalletConnected,
+  Loader,
+} from './components';
 import { useMetaMask, useFetchNFTs, useScreenWidth } from './hooks';
 import MobileShoppingCartModal from './components/modal/MobileShoppingCartModal';
 import DesktopShoppingCartModal from './components/modal/DesktopShoppingCartModal';
 import { useState } from 'react';
 
-const ACTIVE_CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
+const { ethereum } = window;
 
-const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_RPC_URL);
-const signer = provider.getSigner();
-
-const basicNFTMarketplaceContract = new ethers.Contract(
-  networkMapping[ACTIVE_CHAIN_ID],
-  abi,
-  signer
-);
+const provider = new ethers.providers.Web3Provider(ethereum, 'any');
 
 function App() {
-  const { connectToMetaMask, connectedAccount, connectedChain } = useMetaMask();
-  const { fetchingNFTs, nfts } = useFetchNFTs(basicNFTMarketplaceContract, provider);
+  const { connectedToMetaMask, connectToMetaMask, connectedAccount, connectedChain } =
+    useMetaMask();
+
+  const { fetchingNFTs, nftMap, updateNFT } = useFetchNFTs(connectedChain);
+
   const [itemToBuy, setItemToBuy] = useState(null);
   const screenWidth = useScreenWidth();
 
-  const isNetworkSuported = connectedChain === ACTIVE_CHAIN_ID;
+  const isNetworkSuported = true; // = connectedChain === 5 || connectedChain === 31337;
 
   const showCart = !!itemToBuy;
   const showMobileCart = screenWidth < 1024;
+  const nfts = Object.values(nftMap);
+
+  const handleBuyNFT = async (nftAddress, tokenId) => {
+    try {
+      if (!connectedToMetaMask) {
+        await connectToMetaMask();
+      }
+
+      const signer = provider.getSigner();
+      const marketplaceContract = new ethers.Contract(networkMapping[5], abi, signer);
+      const transaction = await marketplaceContract.connect(signer).buyItem(nftAddress, tokenId, {
+        value: ethers.utils.parseEther('0.1'),
+      });
+
+      const receipt = await transaction.wait();
+
+      const updatedNFT = {
+        ...nftMap[tokenId],
+        owner: receipt.from,
+        bought: true,
+      };
+
+      updateNFT(updatedNFT);
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
 
   return (
     <div>
       {connectedChain && !isNetworkSuported && <NetworkNotSupportedError />}
 
       <Nav>
-        <AppTitle />
-        {!connectedAccount && <button onClick={connectToMetaMask}>connect</button>}
-        {connectedAccount && <p>{shortenAddress(connectedAccount)}</p>}
+        <NavContent>
+          <AppTitle />
+
+          {!connectedAccount && (
+            <ConnectWalletButton onClick={connectToMetaMask}>connect</ConnectWalletButton>
+          )}
+
+          {connectedAccount && <WalletConnected connectedAccount={connectedAccount} />}
+        </NavContent>
       </Nav>
 
-      <div css={{ marginTop: '68px' }}>
+      <div css={{ marginTop: '72px' }}>
         <BannerImg />
 
         <Header>
@@ -74,69 +110,75 @@ function App() {
           </HeaderContent>
         </Header>
 
-        {fetchingNFTs && <h1>LOADING....</h1>}
+        <div css={{ maxWidth: '1280px', margin: 'auto' }}>
+          {fetchingNFTs && (
+            <div css={{ marginTop: '180px' }}>
+              <Loader />
+            </div>
+          )}
 
-        {!fetchingNFTs && (
-          <NFTGrid>
-            {nfts.map((nft) => {
-              return (
-                <NFTItem
-                  key={nft.tokenId}
-                  hasSold={false}
-                  onClick={() => {
-                    setItemToBuy(nft);
-                  }}
-                >
-                  <div css={{ padding: '16px' }}>
-                    <NFTItemImage src={nft.image} />
-                    <NFTItemName>CRYPTO PENGUIN #{nft.tokenId}</NFTItemName>
-                    <NFTItemRow>
-                      <NFTItemDetail>Price</NFTItemDetail>
-                      <NFTItemDetailContent>0.1 ETH</NFTItemDetailContent>
-                    </NFTItemRow>
-                    <NFTItemRow>
-                      <NFTItemDetail>Owner</NFTItemDetail>
-                      <NFTItemDetailContent title={nft.owner}>
-                        {shortenAddress(nft.owner)}
-                      </NFTItemDetailContent>
-                    </NFTItemRow>
-                  </div>
+          {!fetchingNFTs && (
+            <NFTGrid>
+              {nfts.map((nft) => {
+                return (
+                  <NFTItem
+                    key={nft.tokenId}
+                    hasSold={false}
+                    onClick={() => {
+                      setItemToBuy(nft);
+                    }}
+                  >
+                    <div css={{ padding: '16px' }}>
+                      <NFTItemImage src={nft.image} />
+                      <NFTItemName>CRYPTO PENGUIN #{nft.tokenId}</NFTItemName>
+                      <NFTItemRow>
+                        <NFTItemDetail>Price</NFTItemDetail>
+                        <NFTItemDetailContent>0.1 ETH</NFTItemDetailContent>
+                      </NFTItemRow>
+                      <NFTItemRow>
+                        <NFTItemDetail>Owner</NFTItemDetail>
+                        <NFTItemDetailContent title={nft.owner}>
+                          {shortenAddress(nft.owner)}
+                        </NFTItemDetailContent>
+                      </NFTItemRow>
+                    </div>
 
-                  {!nft.bought && (
-                    <NFTItemBuyButton
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setItemToBuy(nft);
-                      }}
-                    />
-                  )}
+                    {!nft.bought && (
+                      <NFTItemBuyButton
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setItemToBuy(nft);
+                        }}
+                      />
+                    )}
 
-                  {nft.bought && <NFTItemSoldBanner />}
-                </NFTItem>
-              );
-            })}
-          </NFTGrid>
-        )}
+                    {nft.bought && <NFTItemSoldBanner />}
+                  </NFTItem>
+                );
+              })}
+            </NFTGrid>
+          )}
 
-        {showCart && !showMobileCart && (
-          <DesktopShoppingCartModal
-            itemToBuy={itemToBuy}
-            // onBuy={handleBuyNFT}
-            onClose={() => {
-              setItemToBuy(null);
-            }}
-          />
-        )}
+          {showCart && !showMobileCart && (
+            <DesktopShoppingCartModal
+              itemToBuy={itemToBuy}
+              onBuy={handleBuyNFT}
+              onClose={() => {
+                setItemToBuy(null);
+              }}
+            />
+          )}
 
-        {showCart && showMobileCart && (
-          <MobileShoppingCartModal
-            itemToBuy={itemToBuy}
-            // onBuy={handleBuyNFT}
-            onClose={() => {
-              setItemToBuy(null);
-            }}
-          />
-        )}
+          {showCart && showMobileCart && (
+            <MobileShoppingCartModal
+              itemToBuy={itemToBuy}
+              onBuy={handleBuyNFT}
+              onClose={() => {
+                setItemToBuy(null);
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

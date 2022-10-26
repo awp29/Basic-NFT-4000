@@ -14,10 +14,6 @@ const Nav = (props) => {
         zIndex: 1030,
         boxShadow: 'rgb(229 232 235 / 0%) 0px 1px 0px 0px',
         borderBottom: '1px solid rgb(229, 232, 235)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '16px',
       }}
     >
       {children}
