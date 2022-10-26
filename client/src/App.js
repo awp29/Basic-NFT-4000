@@ -2,7 +2,6 @@
 import { ethers } from 'ethers';
 import networkMapping from './constants/networkMapping.json';
 import abi from './constants/abi.json';
-import { useEffect, useState } from 'react';
 import { Nav, AppTitle } from './components/navbar';
 import BannerImg from './components/BannerImg';
 import {
@@ -26,7 +25,10 @@ import {
 } from './components/NFTItem';
 import { shortenAddress } from './utils/shortenAddress';
 import { NetworkNotSupportedError } from './components';
-import { useMetaMask, useFetchNFTs } from './hooks';
+import { useMetaMask, useFetchNFTs, useScreenWidth } from './hooks';
+import MobileShoppingCartModal from './components/modal/MobileShoppingCartModal';
+import DesktopShoppingCartModal from './components/modal/DesktopShoppingCartModal';
+import { useState } from 'react';
 
 const ACTIVE_CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 
@@ -42,8 +44,13 @@ const basicNFTMarketplaceContract = new ethers.Contract(
 function App() {
   const { connectToMetaMask, connectedAccount, connectedChain } = useMetaMask();
   const { fetchingNFTs, nfts } = useFetchNFTs(basicNFTMarketplaceContract, provider);
+  const [itemToBuy, setItemToBuy] = useState(null);
+  const screenWidth = useScreenWidth();
 
   const isNetworkSuported = connectedChain === ACTIVE_CHAIN_ID;
+
+  const showCart = !!itemToBuy;
+  const showMobileCart = screenWidth < 1024;
 
   return (
     <div>
@@ -73,7 +80,13 @@ function App() {
           <NFTGrid>
             {nfts.map((nft) => {
               return (
-                <NFTItem key={nft.tokenId} hasSold={false}>
+                <NFTItem
+                  key={nft.tokenId}
+                  hasSold={false}
+                  onClick={() => {
+                    setItemToBuy(nft);
+                  }}
+                >
                   <div css={{ padding: '16px' }}>
                     <NFTItemImage src={nft.image} />
                     <NFTItemName>CRYPTO PENGUIN #{nft.tokenId}</NFTItemName>
@@ -93,7 +106,7 @@ function App() {
                     <NFTItemBuyButton
                       onClick={(e) => {
                         e.preventDefault();
-                        console.log('click');
+                        setItemToBuy(nft);
                       }}
                     />
                   )}
@@ -103,6 +116,26 @@ function App() {
               );
             })}
           </NFTGrid>
+        )}
+
+        {showCart && !showMobileCart && (
+          <DesktopShoppingCartModal
+            itemToBuy={itemToBuy}
+            // onBuy={handleBuyNFT}
+            onClose={() => {
+              setItemToBuy(null);
+            }}
+          />
+        )}
+
+        {showCart && showMobileCart && (
+          <MobileShoppingCartModal
+            itemToBuy={itemToBuy}
+            // onBuy={handleBuyNFT}
+            onClose={() => {
+              setItemToBuy(null);
+            }}
+          />
         )}
       </div>
     </div>

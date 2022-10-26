@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 
 const NFTItem = (props) => {
-  const { hasSold, children } = props;
+  const { hasSold, children, onClick } = props;
   return (
     <a
       css={{
@@ -20,9 +20,7 @@ const NFTItem = (props) => {
           },
         },
       }}
-      onClick={() => {
-        console.log('click');
-      }}
+      onClick={onClick}
     >
       {children}
     </a>
