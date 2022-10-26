@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { isEmpty } from 'lodash';
+
+const MM_CONNECTED_ACCOUNT_KEY = 'mm_connectedAccount';
 
 const { ethereum } = window;
 
@@ -15,9 +18,30 @@ export const useMetaMask = () => {
   };
 
   useEffect(() => {
-    ethereum.on('accountsChanged', (accounts) => {
-      setConnectedAccount(accounts[0]);
-    });
+    const connectedAccount = window.localStorage.getItem(MM_CONNECTED_ACCOUNT_KEY);
+    if (connectedAccount) {
+      setConnectedAccount(connectedAccount);
+    }
+  }, []);
+
+  const handleAccountChanged = (accounts) => {
+    const account = accounts[0];
+
+    if (isEmpty(account)) {
+      removeConnectedAccountFromLocalStorage();
+      setConnectedAccount(null);
+    } else {
+      storeConnectedAccountInLocalStorage(account);
+      setConnectedAccount(account);
+    }
+  };
+
+  useEffect(() => {
+    ethereum.on('accountsChanged', handleAccountChanged);
+
+    return () => {
+      ethereum.removeListener('accountsChanged', handleAccountChanged);
+    };
   }, []);
 
   return {
@@ -26,3 +50,11 @@ export const useMetaMask = () => {
     connectedChain: ethereum.networkVersion,
   };
 };
+
+function storeConnectedAccountInLocalStorage(connectedAddress) {
+  window.localStorage.setItem(MM_CONNECTED_ACCOUNT_KEY, connectedAddress);
+}
+
+function removeConnectedAccountFromLocalStorage() {
+  window.localStorage.removeItem(MM_CONNECTED_ACCOUNT_KEY);
+}

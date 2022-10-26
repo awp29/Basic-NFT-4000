@@ -44,8 +44,6 @@ function App() {
   const [listedNFTs, setListedNFTs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  console.log('connectedChain', connectedChain);
-  console.log('ACTIVE_CHAIN_ID', ACTIVE_CHAIN_ID);
   const isNetworkSuported = connectedChain === ACTIVE_CHAIN_ID;
 
   useEffect(() => {
