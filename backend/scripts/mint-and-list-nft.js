@@ -27,9 +27,6 @@ async function mintAndList() {
   const basicNFTMarketplace = await ethers.getContract('BasicNFTMarketplace');
   const basicNFT = await ethers.getContract('BasicNFT');
 
-  const singers = await ethers.getSigners();
-  console.log('singers', singers);
-
   for (const url of nftUrls) {
     console.log('Minting NFT...');
 

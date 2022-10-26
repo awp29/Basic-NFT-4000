@@ -22,10 +22,11 @@ import {
   NFTItemImage,
   NFTItemName,
   NFTItemRow,
+  NFTItemSoldBanner,
 } from './components/NFTItem';
 import { shortenAddress } from './utils/shortenAddress';
 import { NetworkNotSupportedError } from './components';
-import { useMetaMask } from './hooks/useMetaMask';
+import { useMetaMask, useFetchNFTs } from './hooks';
 
 const ACTIVE_CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 
@@ -40,58 +41,9 @@ const basicNFTMarketplaceContract = new ethers.Contract(
 
 function App() {
   const { connectToMetaMask, connectedAccount, connectedChain } = useMetaMask();
-
-  const [listedNFTs, setListedNFTs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { fetchingNFTs, nfts } = useFetchNFTs(basicNFTMarketplaceContract, provider);
 
   const isNetworkSuported = connectedChain === ACTIVE_CHAIN_ID;
-
-  useEffect(() => {
-    const fetchInitalData = async () => {
-      try {
-        const listedItemFilter = basicNFTMarketplaceContract.filters.ListedItem();
-        const listedItemLogs = await provider.getLogs({
-          fromBlock: 0,
-          toBlock: 'latest',
-          ...listedItemFilter,
-        });
-
-        console.log('basicNFTMintedLogs', listedItemLogs);
-
-        const contractInterface = new ethers.utils.Interface(abi);
-        const listedNFTs = [];
-
-        const promises = listedItemLogs.map(async (log) => {
-          const parsedLog = contractInterface.parseLog(log);
-          const tokenUri = stripIPFSPrefix(parsedLog.args.tokenUri);
-
-          const nftMetaData = await (
-            await fetch(`https://nftstorage.link/ipfs/${tokenUri}`)
-          ).json();
-
-          const imageUrl = stripIPFSPrefix(nftMetaData.image);
-
-          listedNFTs.push({
-            owner: parsedLog.args.seller,
-            nftAddress: parsedLog.args.nftAddress,
-            tokenId: parseInt(parsedLog.args.tokenId),
-            tokenUri,
-            image: `https://nftstorage.link/ipfs/${imageUrl}`,
-          });
-        });
-
-        await Promise.all(promises);
-
-        setListedNFTs(listedNFTs);
-        setLoading(false);
-      } catch (error) {
-        console.error(error);
-        setLoading(false);
-      }
-    };
-
-    fetchInitalData();
-  }, []);
 
   return (
     <div>
@@ -115,11 +67,11 @@ function App() {
           </HeaderContent>
         </Header>
 
-        {loading && <h1>LOADING....</h1>}
+        {fetchingNFTs && <h1>LOADING....</h1>}
 
-        {!loading && (
+        {!fetchingNFTs && (
           <NFTGrid>
-            {listedNFTs.map((nft) => {
+            {nfts.map((nft) => {
               return (
                 <NFTItem key={nft.tokenId} hasSold={false}>
                   <div css={{ padding: '16px' }}>
@@ -137,12 +89,16 @@ function App() {
                     </NFTItemRow>
                   </div>
 
-                  <NFTItemBuyButton
-                    onClick={(e) => {
-                      e.preventDefault();
-                      console.log('click');
-                    }}
-                  />
+                  {!nft.bought && (
+                    <NFTItemBuyButton
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log('click');
+                      }}
+                    />
+                  )}
+
+                  {nft.bought && <NFTItemSoldBanner />}
                 </NFTItem>
               );
             })}
@@ -154,7 +110,3 @@ function App() {
 }
 
 export default App;
-
-function stripIPFSPrefix(ipfsUrl) {
-  return ipfsUrl.substring(7);
-}
