@@ -14,10 +14,20 @@ const WalletConnected = (props) => {
             height: '12px',
             borderRadius: '50%',
             backgroundColor: '#1B9E64',
-            marginRight: '4px',
           }}
         />
-        <p css={{ position: 'relative', top: '1px', fontSize: '14px' }}>
+        <p
+          css={{
+            display: 'none',
+            position: 'relative',
+            top: '1px',
+            fontSize: '14px',
+            '@media only screen and (min-width: 370px)': {
+              display: 'block',
+              marginLeft: '4px',
+            },
+          }}
+        >
           {shortenAddress(connectedAccount)}
         </p>
       </div>

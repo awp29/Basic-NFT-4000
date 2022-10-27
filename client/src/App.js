@@ -1,4 +1,5 @@
 /** @jsxImportSource @emotion/react */
+
 import { ethers } from 'ethers';
 import networkMapping from './constants/networkMapping.json';
 import abi from './constants/abi.json';
@@ -34,21 +35,20 @@ import { useMetaMask, useFetchNFTs, useScreenWidth } from './hooks';
 import MobileShoppingCartModal from './components/modal/MobileShoppingCartModal';
 import DesktopShoppingCartModal from './components/modal/DesktopShoppingCartModal';
 import { useState } from 'react';
+import { getSupportChainId } from './utils/supportedNetwork';
 
 const { ethereum } = window;
-
 const provider = new ethers.providers.Web3Provider(ethereum, 'any');
 
 function App() {
   const { connectedToMetaMask, connectToMetaMask, connectedAccount, connectedChain } =
     useMetaMask();
-
-  const { fetchingNFTs, nftMap, updateNFT } = useFetchNFTs(connectedChain);
+  const { fetchingNFTs, nftMap, updateNFT } = useFetchNFTs();
 
   const [itemToBuy, setItemToBuy] = useState(null);
   const screenWidth = useScreenWidth();
 
-  const isNetworkSuported = true; // = connectedChain === 5 || connectedChain === 31337;
+  const isNetworkSuported = connectedChain == 5 || connectedChain == 31337;
 
   const showCart = !!itemToBuy;
   const showMobileCart = screenWidth < 1024;
@@ -60,8 +60,15 @@ function App() {
         await connectToMetaMask();
       }
 
+      const supportedChainId = getSupportChainId();
       const signer = provider.getSigner();
-      const marketplaceContract = new ethers.Contract(networkMapping[5], abi, signer);
+
+      const marketplaceContract = new ethers.Contract(
+        networkMapping[supportedChainId],
+        abi,
+        signer
+      );
+
       const transaction = await marketplaceContract.connect(signer).buyItem(nftAddress, tokenId, {
         value: ethers.utils.parseEther('0.1'),
       });

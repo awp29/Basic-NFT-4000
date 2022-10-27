@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import abi from '../constants/abi.json';
 import networkMapping from '../constants/networkMapping.json';
+import { getSupportChainId, getSupportedNetworkUrl } from '../utils/supportedNetwork';
 
 export const useFetchNFTs = (chainId) => {
   const [fetchingNFTs, setFetchingNFTs] = useState(true);
@@ -10,10 +11,11 @@ export const useFetchNFTs = (chainId) => {
   useEffect(() => {
     const fetchNFTs = async () => {
       try {
-        // const providerUrl = getProviderURL(chainId);
-        // const supportedChainId = getSupportedChainId(chainId);
-        const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
-        const marketplaceContract = new ethers.Contract(networkMapping[31337], abi);
+        const supportedNetworkUrl = getSupportedNetworkUrl();
+        const supportedChainId = getSupportChainId();
+
+        const provider = new ethers.providers.JsonRpcProvider(supportedNetworkUrl);
+        const marketplaceContract = new ethers.Contract(networkMapping[supportedChainId], abi);
 
         const listedItemFilter = marketplaceContract.filters.ListedItem();
         const boughtItemFilter = marketplaceContract.filters.ItemBought();
@@ -130,20 +132,3 @@ async function fetchNFTImages(nfts) {
 function stripIPFSPrefix(ipfsUrl) {
   return ipfsUrl.substring(7);
 }
-
-// function getProviderURL(chainId) {
-//   if (chainId === '31337') {
-//     return 'http://localhost:8545';
-//   }
-//   return 'https://goerli.infura.io/v3/6fa8980e7b7f47d281b7f5688c31663e';
-// }
-
-// function getSupportedChainId(chainId) {
-//   console.log('getSupportedChainId', chainId);
-//   if (chainId == 5 || chainId == 31337) {
-//     console.log('return', chainId);
-//     return chainId;
-//   }
-//   // DEFAULT TO GOERLI
-//   return 5;
-// }

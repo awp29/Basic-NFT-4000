@@ -7,8 +7,9 @@ const MM_CONNECTED_CHAIN_KEY = 'mm_connectedChain';
 const { ethereum } = window;
 
 export const useMetaMask = () => {
-  const [connectedAccount, setConnectedAccount] = useState(null);
-  const [connectedChain, setConnectedChain] = useState(null);
+  const [connectedAccount, setConnectedAccount] = useState(
+    window.localStorage.getItem(MM_CONNECTED_ACCOUNT_KEY)
+  );
 
   const handleConnectToMetaMask = async () => {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
@@ -17,18 +18,6 @@ export const useMetaMask = () => {
     handleAccountChanged(accounts);
     handleChainChanged(chain);
   };
-
-  useEffect(() => {
-    const connectedAccount = window.localStorage.getItem(MM_CONNECTED_ACCOUNT_KEY);
-    if (connectedAccount) {
-      setConnectedAccount(connectedAccount);
-    }
-
-    const connectedChain = window.localStorage.getItem(MM_CONNECTED_CHAIN_KEY);
-    if (connectedChain) {
-      setConnectedChain(parseInt(connectedChain).toString());
-    }
-  }, []);
 
   const handleAccountChanged = (accounts) => {
     const account = accounts[0];
@@ -67,7 +56,7 @@ export const useMetaMask = () => {
     connectedToMetaMask: !!connectedAccount,
     connectToMetaMask: handleConnectToMetaMask,
     connectedAccount,
-    connectedChain,
+    connectedChain: window.localStorage.getItem(MM_CONNECTED_CHAIN_KEY),
   };
 };
 
