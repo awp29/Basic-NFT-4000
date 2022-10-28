@@ -8,10 +8,9 @@ error NotOwner();
 error NotApprovedForMarketplace();
 error NotListed(address nftAddres, uint256 tokenId);
 error PriceNotMet(address nftAddress, uint256 tokenId, uint256 price);
+error NoProceeds();
 
 contract BasicNFTMarketplace is ReentrancyGuard {
-  uint256 private proceeds;
-
   struct Listing {
     address seller;
     uint256 price;
@@ -34,6 +33,7 @@ contract BasicNFTMarketplace is ReentrancyGuard {
 
   // s_listings[sellerAddress][tokenId] returns Listing
   mapping(address => mapping(uint256 => Listing)) private s_listings;
+  mapping(address => uint256) private s_proceeds;
 
   modifier isOwnerOfNFT(
     address nftAddress,
@@ -80,13 +80,28 @@ contract BasicNFTMarketplace is ReentrancyGuard {
     if (msg.value < listedItem.price) {
       revert PriceNotMet(nftAddress, tokenId, listedItem.price);
     }
-    proceeds += msg.value;
+
+    s_proceeds[listedItem.seller] += msg.value;
 
     IERC721(nftAddress).safeTransferFrom(listedItem.seller, msg.sender, tokenId);
     emit ItemBought(msg.sender, nftAddress, tokenId, listedItem.price);
   }
 
+  function withdrawProceeds() external {
+    uint256 proceeds = s_proceeds[msg.sender];
+    if (proceeds <= 0) {
+      revert NoProceeds();
+    }
+    s_proceeds[msg.sender] = 0;
+    (bool success, ) = payable(msg.sender).call{value: proceeds}('');
+    require(success, 'Transfer failed');
+  }
+
   function getListing(address nftAddress, uint256 tokenId) external view returns (Listing memory) {
     return s_listings[nftAddress][tokenId];
+  }
+
+  function getProceeds(address seller) external view returns (uint256) {
+    return s_proceeds[seller];
   }
 }

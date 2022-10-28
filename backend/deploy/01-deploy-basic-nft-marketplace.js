@@ -10,7 +10,7 @@ module.exports = async (hre) => {
     ? 1
     : VERIFICATION_BLOCK_CONFIRMATIONS;
 
-  log('Deploying BasicNFT ------------------------');
+  log('Deploying BasicNFTMarketplace ------------------------');
 
   const args = [];
   const basicNFTMarketplace = await deploy('BasicNFTMarketplace', {
@@ -25,7 +25,7 @@ module.exports = async (hre) => {
     await verify(basicNFTMarketplace.address, args);
   }
 
-  log('Deployed BasicNFT -------------------------');
+  log('Deployed BasicNFTMarketplace -------------------------');
 };
 
 module.exports.tags = ['all', 'basicnft'];
