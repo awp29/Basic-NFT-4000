@@ -38,7 +38,6 @@ import { useState } from 'react';
 import { getSupportChainId } from './utils/supportedNetwork';
 
 const { ethereum } = window;
-const provider = new ethers.providers.Web3Provider(ethereum, 'any');
 
 function App() {
   const { connectedToMetaMask, connectToMetaMask, connectedAccount, connectedChain } =
@@ -61,6 +60,7 @@ function App() {
       }
 
       const supportedChainId = getSupportChainId();
+      const provider = new ethers.providers.Web3Provider(ethereum, 'any');
       const signer = provider.getSigner();
 
       const marketplaceContract = new ethers.Contract(

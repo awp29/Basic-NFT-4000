@@ -32,6 +32,8 @@ export const useMetaMask = () => {
   };
 
   useEffect(() => {
+    if (!ethereum) return;
+
     ethereum.on('accountsChanged', handleAccountChanged);
 
     return () => {
@@ -45,6 +47,8 @@ export const useMetaMask = () => {
   };
 
   useEffect(() => {
+    if (!ethereum) return;
+
     ethereum.on('chainChanged', handleChainChanged);
 
     return () => {
