@@ -15,9 +15,9 @@ const nftUrls = [
   // 'ipfs://bafyreia5gz3dje4jpzzc7n4hdn3u54hetnz6fyh6fusjxpt43rrwpzb6lm/metadata.json',
   // 'ipfs://bafyreibogtymtebgxywjpmypn2lau2u42x5mrzf3balb3nveobd7lotny4/metadata.json',
   // 'ipfs://bafyreiak6urqkrxcff45qzdtlzjmmmzebpboayxh24wfwn6aej2u5djl7m/metadata.json',
-  'ipfs://bafyreifg3y747h3xtgnjpdbvweakk2oi5cd4xztmzbuooomfc4w7frjeqy/metadata.json',
+  // 'ipfs://bafyreifg3y747h3xtgnjpdbvweakk2oi5cd4xztmzbuooomfc4w7frjeqy/metadata.json',
   // 'ipfs://bafyreicro3fvqdatmtsjtg7xb67ursyxuo2nrohflckvjksd4to3expdr4/metadata.json',
-  // 'ipfs://bafyreiavt7s46rslkvl2jwyrns6cpalixxwp35cc6xd4hzryarwuvfjbvy/metadata.json',
+  'ipfs://bafyreiavt7s46rslkvl2jwyrns6cpalixxwp35cc6xd4hzryarwuvfjbvy/metadata.json',
   // 'ipfs://bafyreih4r3zzxqxkn3wni2tcguix4skvedoqa7ignpfdks74723s5rhizu/metadata.json',
   // 'ipfs://bafyreieazpylkdyn4dxid4fn57u6a4nd2oge7j3ugz2e3xc7cqwz6rscra/metadata.json',
   // 'ipfs://bafyreibtuewt4wxa5rp3pssnfhkhtdnyimr5qjma63lfdqamibscz5anau/metadata.json',
@@ -33,16 +33,16 @@ async function mintAndList() {
   const basicNFT = await ethers.getContract('BasicNFT');
 
   const alchemy = new ethers.providers.JsonRpcProvider(GOERLI_RPC_URL);
-  const gasPrice = await alchemy.getGasPrice();
+  const feeData = await alchemy.getFeeData();
 
-  console.log('gas price', ethers.utils.formatEther(gasPrice));
+  console.log('feeData', feeData);
 
   for (const url of nftUrls) {
     console.log('Minting NFT...');
 
     const mintTx = await basicNFT.mintNFT(url, {
-      gasPrice: gasPrice,
-      // gasLimit: BigNumber.from('100000000000'),
+      maxFeePerGas: feeData.maxFeePerGas,
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     });
 
     const mintTxReceipt = await mintTx.wait(1);
@@ -51,8 +51,8 @@ async function mintAndList() {
     console.log('Approving NFT...');
 
     const approvalTx = await basicNFT.approve(basicNFTMarketplace.address, tokenId, {
-      gasPrice: gasPrice,
-      // gasLimit: BigNumber.from('100000000000'),
+      maxFeePerGas: feeData.maxFeePerGas,
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     });
 
     await approvalTx.wait(1);
@@ -60,8 +60,8 @@ async function mintAndList() {
     console.log('Listing NFT...');
 
     const tx = await basicNFTMarketplace.listItem(basicNFT.address, tokenId, url, {
-      gasPrice: gasPrice,
-      // gasLimit: BigNumber.from('100000000000'),
+      maxFeePerGas: feeData.maxFeePerGas,
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     });
 
     await tx.wait(1);
