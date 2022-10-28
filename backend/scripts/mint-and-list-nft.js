@@ -1,4 +1,8 @@
 const { ethers } = require('hardhat');
+const { developmentChains } = require('../helper-hardhat-config');
+require('dotenv').config();
+
+const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL;
 
 const nftUrls = [
   'ipfs://bafyreift23cyvsgft72xamhdmbkhiymerj6icokzlqkfz27tzv6ivzfgme/metadata.json',
@@ -27,21 +31,43 @@ async function mintAndList() {
   const basicNFTMarketplace = await ethers.getContract('BasicNFTMarketplace');
   const basicNFT = await ethers.getContract('BasicNFT');
 
+  let transactionConfig = {};
+  if (network.name === 'goerli') {
+    const alchemy = new ethers.providers.JsonRpcProvider(GOERLI_RPC_URL);
+    const gasPrice = await alchemy.getGasPrice();
+
+    transactionConfig = {
+      gasPrice: gasPrice,
+    };
+  }
+
   for (const url of nftUrls) {
     console.log('Minting NFT...');
 
-    const mintTx = await basicNFT.mintNFT(url);
+    const mintTx = await basicNFT.mintNFT(url, transactionConfig);
+
     const mintTxReceipt = await mintTx.wait(1);
     const tokenId = mintTxReceipt.events[0].args.tokenId;
 
     console.log('Approving NFT...');
 
-    const approvalTx = await basicNFT.approve(basicNFTMarketplace.address, tokenId);
+    const approvalTx = await basicNFT.approve(
+      basicNFTMarketplace.address,
+      tokenId,
+      transactionConfig
+    );
+
     await approvalTx.wait(1);
 
     console.log('Listing NFT...');
 
-    const tx = await basicNFTMarketplace.listItem(basicNFT.address, tokenId, url);
+    const tx = await basicNFTMarketplace.listItem(
+      basicNFT.address,
+      tokenId,
+      url,
+      transactionConfig
+    );
+
     await tx.wait(1);
 
     console.log('NFT Listed!');

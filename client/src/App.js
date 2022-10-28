@@ -130,7 +130,7 @@ function App() {
                 return (
                   <NFTItem
                     key={nft.tokenId}
-                    hasSold={false}
+                    hasSold={nft.bought}
                     onClick={() => {
                       setItemToBuy(nft);
                     }}
