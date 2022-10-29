@@ -61,6 +61,7 @@ export const useMetaMask = () => {
     connectToMetaMask: handleConnectToMetaMask,
     connectedAccount,
     connectedChain: window.localStorage.getItem(MM_CONNECTED_CHAIN_KEY),
+    metaMaskRequiredError: !ethereum,
   };
 };
 

@@ -1,7 +1,7 @@
 import BannerImg from './BannerImg';
-import NetworkNotSupportedError from './NetworkNotSupportedError';
+import ErrorBanner from './ErrorBanner';
 import ConnectWalletButton from './ConnectWalletButton';
 import WalletConnected from './WalletConnected';
 import Loader from './Loader';
 
-export { BannerImg, NetworkNotSupportedError, ConnectWalletButton, WalletConnected, Loader };
+export { BannerImg, ErrorBanner, ConnectWalletButton, WalletConnected, Loader };

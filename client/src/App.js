@@ -16,7 +16,7 @@ import {
 import { NFTGrid } from './components/NFTGrid';
 import {
   NFTItem,
-  NFTItemBuyButton,
+  NFTItemBuyBanner,
   NFTItemDetail,
   NFTItemDetailContent,
   NFTItemImage,
@@ -25,12 +25,7 @@ import {
   NFTItemSoldBanner,
 } from './components/NFTItem';
 import { shortenAddress } from './utils/shortenAddress';
-import {
-  NetworkNotSupportedError,
-  ConnectWalletButton,
-  WalletConnected,
-  Loader,
-} from './components';
+import { ConnectWalletButton, WalletConnected, Loader, ErrorBanner } from './components';
 import { useMetaMask, useFetchNFTs, useScreenWidth } from './hooks';
 import MobileShoppingCartModal from './components/modal/MobileShoppingCartModal';
 import DesktopShoppingCartModal from './components/modal/DesktopShoppingCartModal';
@@ -40,14 +35,21 @@ import { getSupportChainId } from './utils/supportedNetwork';
 const { ethereum } = window;
 
 function App() {
-  const { connectedToMetaMask, connectToMetaMask, connectedAccount, connectedChain } =
-    useMetaMask();
+  const {
+    connectedToMetaMask,
+    connectToMetaMask,
+    connectedAccount,
+    connectedChain,
+    metaMaskRequiredError,
+  } = useMetaMask();
+
   const { fetchingNFTs, nftMap, updateNFT } = useFetchNFTs();
 
   const [itemToBuy, setItemToBuy] = useState(null);
   const screenWidth = useScreenWidth();
 
   const isNetworkSuported = connectedChain == 5 || connectedChain == 31337;
+  const previewOnly = !isNetworkSuported || metaMaskRequiredError;
 
   const showCart = !!itemToBuy;
   const showMobileCart = screenWidth < 1024;
@@ -91,19 +93,36 @@ function App() {
 
   return (
     <div>
-      {connectedChain && !isNetworkSuported && <NetworkNotSupportedError />}
+      <div css={{ position: 'fixed', top: 0, width: '100%', zIndex: 1030 }}>
+        {connectedChain && !isNetworkSuported && (
+          <ErrorBanner>
+            The current Network is not supported, please switch to goerli to purchase NFTs
+          </ErrorBanner>
+        )}
 
-      <Nav>
-        <NavContent>
-          <AppTitle />
+        {metaMaskRequiredError && (
+          <ErrorBanner>
+            To purchase NFTs MetaMask is required, please follow the{' '}
+            <a href="https://metamask.io/" target="_blank" rel="noreferrer">
+              link
+            </a>{' '}
+            to setup MetaMask
+          </ErrorBanner>
+        )}
+        <Nav>
+          <NavContent>
+            <AppTitle />
 
-          {!connectedAccount && (
-            <ConnectWalletButton onClick={connectToMetaMask}>connect</ConnectWalletButton>
-          )}
+            {!connectedAccount && !previewOnly && (
+              <ConnectWalletButton onClick={connectToMetaMask}>connect</ConnectWalletButton>
+            )}
 
-          {connectedAccount && <WalletConnected connectedAccount={connectedAccount} />}
-        </NavContent>
-      </Nav>
+            {connectedAccount && !previewOnly && (
+              <WalletConnected connectedAccount={connectedAccount} />
+            )}
+          </NavContent>
+        </Nav>
+      </div>
 
       <div css={{ marginTop: '72px' }}>
         <BannerImg />
@@ -131,6 +150,7 @@ function App() {
                   <NFTItem
                     key={nft.tokenId}
                     hasSold={nft.bought}
+                    disabled={previewOnly}
                     onClick={() => {
                       setItemToBuy(nft);
                     }}
@@ -150,16 +170,12 @@ function App() {
                       </NFTItemRow>
                     </div>
 
-                    {!nft.bought && (
-                      <NFTItemBuyButton
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setItemToBuy(nft);
-                        }}
-                      />
+                    {!previewOnly && (
+                      <>
+                        {!nft.bought && <NFTItemBuyBanner />}
+                        {nft.bought && <NFTItemSoldBanner />}
+                      </>
                     )}
-
-                    {nft.bought && <NFTItemSoldBanner />}
                   </NFTItem>
                 );
               })}

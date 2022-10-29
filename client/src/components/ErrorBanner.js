@@ -1,11 +1,11 @@
 /** @jsxImportSource @emotion/react */
 
-const NetworkNotSupportedError = () => {
+const ErrorBanner = (props) => {
+  const { children } = props;
+
   return (
     <p
       css={{
-        position: 'fixed',
-        top: 0,
         width: '100%',
         padding: '16px',
         background: '#F20000',
@@ -15,9 +15,9 @@ const NetworkNotSupportedError = () => {
         textAlign: 'center',
       }}
     >
-      CHAIN NOT SUPPORTED, PLEASE SWITHC TO GOERLI
+      {children}
     </p>
   );
 };
 
-export default NetworkNotSupportedError;
+export default ErrorBanner;

@@ -4,7 +4,7 @@ import NFTItemName from './NFTItemName';
 import NFTItemRow from './NFTItemRow';
 import NFTItemDetail from './NFTItemDetail';
 import NFTItemDetailContent from './NFTItemDetailContent';
-import NFTItemBuyButton from './NFTItemBuyButton';
+import NFTItemBuyBanner from './NFTItemBuyBanner';
 import NFTItemSoldBanner from './NFTItemSoldBanner';
 
 export {
@@ -14,6 +14,6 @@ export {
   NFTItemRow,
   NFTItemDetail,
   NFTItemDetailContent,
-  NFTItemBuyButton,
+  NFTItemBuyBanner,
   NFTItemSoldBanner,
 };
