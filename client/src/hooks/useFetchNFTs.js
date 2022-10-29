@@ -3,6 +3,8 @@ import { ethers } from 'ethers';
 import abi from '../constants/abi.json';
 import networkMapping from '../constants/networkMapping.json';
 import { getSupportChainId, getSupportedNetworkUrl } from '../utils/supportedNetwork';
+import { toString as uint8ArrayToString } from 'uint8arrays/to-string';
+import { concat as uint8ArrayConcat } from 'uint8arrays/concat';
 
 export const useFetchNFTs = (chainId) => {
   const [fetchingNFTs, setFetchingNFTs] = useState(true);
@@ -116,11 +118,14 @@ async function fetchNFTImages(nfts) {
 
   const promises = Object.values(nfts).map(async (nft) => {
     const nftMetaData = await (await fetch(`https://nftstorage.link/ipfs/${nft.tokenUri}`)).json();
+
     const imageUrl = stripIPFSPrefix(nftMetaData.image);
+    const imageBlob = await (await fetch(`https://nftstorage.link/ipfs/${imageUrl}`)).blob();
+    console.log('image', imageBlob);
 
     nftMap[nft.tokenId] = {
       ...nft,
-      image: `https://nftstorage.link/ipfs/${imageUrl}`,
+      image: URL.createObjectURL(imageBlob),
     };
   });
 
