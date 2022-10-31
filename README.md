@@ -5,6 +5,8 @@ This is definitely not a production App, there is still tons to add i.e proper e
 
 A live version of the Dapp can be found here https://cold-thunder-6759.on.fleek.co/
 
+<img width="1274" alt="Screenshot 2022-10-31 at 16 03 36" src="https://user-images.githubusercontent.com/99478348/199053988-a70eb74b-ab57-46ef-b7a2-1f7a9a9f7753.png">
+
 **Note**
 * To use the app MetaMask must be installed
 * Goerli is the only supported network
